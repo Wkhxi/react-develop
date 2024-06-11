@@ -1,32 +1,65 @@
-let currentPathName = window.location.pathname;
+import { hydrateRoot } from "react-dom/client";
+
+let currentPathname = window.location.pathname;
+const root = hydrateRoot(document, getInitialClientJSX());
+
+function getInitialClientJSX() {
+  const clientJSX = JSON.parse(window.__INITIAL_CLIENT_JSX_STRING__, parseJSX);
+  return clientJSX;
+}
 
 async function navigate(pathname) {
-  currentPathName = pathname;
-  // const response = await fetch(pathname);
-  // const html = await response.text(); // 获取导航页面的 HTML
-
-  // 添加 jsx 参数表示获取目标路由的 jsx 对象
-  const response = await fetch(pathname + "?jsx");
-  const jsonString = await response.text();
-
-  console.log("navigate ===>", html);
-  //   <html><head><title>My blog</title><script src="https://cdn.tailwindcss.com"></script></head><body class="p-5"><nav class="flex items-center justify-center gap-10 text-blue-600"><a href="/">Home</a></nav><input required="true" class="block w-full rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"></input><main><section><h1>Blog List:</h1><div><section><a class="text-blue-600" href="/hello">hello</a><article class="h-40 mt-5 flex-1 rounded-xl bg-indigo-500 text-white flex items-center justify-center">&lt;h1&gt;Hello World!&lt;/h1&gt;
-  // </article></section></div></section></main><footer class="h-20 mt-5 flex-1 rounded-xl bg-cyan-500 text-white flex items-center justify-center">(c) YaYu, 2024</footer></body></html><script type="module" src="/client.js"></script>
-
-  if (pathname === currentPathName) {
-    const res = /<body(.*?)>/.exec(jsonString); // 获取 body 标签内容
-    const bodyStartIndex = res.index + res[0].length; // res[0] :  "<body class=\"p-5\">"
-    const bodyEndIndex = html.lastIndexOf("</body>");
-    const bodyHTML = html.slice(bodyStartIndex, bodyEndIndex);
-
-    console.log("res ===>", res);
-    console.log("bodyStartIndex ===>", bodyStartIndex);
-    console.log("bodyEndIndex ===>", bodyEndIndex);
-    console.log("bodyHTML ===>", bodyHTML);
-
-    document.body.innerHTML = bodyHTML; // 替换 HTML
+  currentPathname = pathname;
+  const clientJSX = await fetchClientJSX(pathname);
+  if (pathname === currentPathname) {
+    root.render(clientJSX);
   }
 }
+
+async function fetchClientJSX(pathname) {
+  const response = await fetch(pathname + "?jsx");
+  const clientJSXString = await response.text();
+  const clientJSX = JSON.parse(clientJSXString, parseJSX);
+  return clientJSX;
+}
+
+function parseJSX(key, value) {
+  if (value === "$RE") {
+    return Symbol.for("react.element");
+  } else if (typeof value === "string" && value.startsWith("$$")) {
+    return value.slice(1);
+  } else {
+    return value;
+  }
+}
+
+// async function navigate(pathname) {
+//   currentPathName = pathname;
+//   // const response = await fetch(pathname);
+//   // const html = await response.text(); // 获取导航页面的 HTML
+
+//   // 添加 jsx 参数表示获取目标路由的 jsx 对象
+//   const response = await fetch(pathname + "?jsx");
+//   const jsonString = await response.text();
+
+//   console.log("navigate ===>", html);
+//   //   <html><head><title>My blog</title><script src="https://cdn.tailwindcss.com"></script></head><body class="p-5"><nav class="flex items-center justify-center gap-10 text-blue-600"><a href="/">Home</a></nav><input required="true" class="block w-full rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"></input><main><section><h1>Blog List:</h1><div><section><a class="text-blue-600" href="/hello">hello</a><article class="h-40 mt-5 flex-1 rounded-xl bg-indigo-500 text-white flex items-center justify-center">&lt;h1&gt;Hello World!&lt;/h1&gt;
+//   // </article></section></div></section></main><footer class="h-20 mt-5 flex-1 rounded-xl bg-cyan-500 text-white flex items-center justify-center">(c) YaYu, 2024</footer></body></html><script type="module" src="/client.js"></script>
+
+//   if (pathname === currentPathName) {
+//     const res = /<body(.*?)>/.exec(jsonString); // 获取 body 标签内容
+//     const bodyStartIndex = res.index + res[0].length; // res[0] :  "<body class=\"p-5\">"
+//     const bodyEndIndex = html.lastIndexOf("</body>");
+//     const bodyHTML = html.slice(bodyStartIndex, bodyEndIndex);
+
+//     console.log("res ===>", res);
+//     console.log("bodyStartIndex ===>", bodyStartIndex);
+//     console.log("bodyEndIndex ===>", bodyEndIndex);
+//     console.log("bodyHTML ===>", bodyHTML);
+
+//     document.body.innerHTML = bodyHTML; // 替换 HTML
+//   }
+// }
 
 window.addEventListener(
   "click",
