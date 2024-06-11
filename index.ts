@@ -43,14 +43,22 @@
 
 import express from "express";
 import { htmlGenerator } from "./generator";
+import { readFile } from "fs/promises";
 const app = express();
 
 app.get("/:route(*)", async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
-  // 获取了当前的页面地址
-  const html = await htmlGenerator(url);
-  res.setHeader("Content-Type", "text/html");
-  res.end(html);
+
+  if (url.pathname === "/client.js") {
+    // script 读取client.js
+    const content = await readFile("./client.js", "utf8");
+    res.setHeader("Content-Type", "text/javascript");
+    res.end(content);
+  } else {
+    const html = await htmlGenerator(url);
+    res.setHeader("Content-Type", "text/html");
+    res.end(html);
+  }
 });
 
 app.listen(3000, (err) => {
